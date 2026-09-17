@@ -1,5 +1,5 @@
 Spothole for the Cardputer(ADV)
-<img width="2016" height="1512" alt="IMG_0517" src="https://github.com/user-attachments/assets/a1a9b26a-c2ac-44a0-a496-8ca375707f18" />
+<img width="1365" height="1024" alt="IMG_0517" src="https://github.com/user-attachments/assets/a1a9b26a-c2ac-44a0-a496-8ca375707f18" />
 r = refresh
 f = filter VK/ZL stations
 m = filter mode
