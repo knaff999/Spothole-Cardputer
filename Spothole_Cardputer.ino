@@ -46,7 +46,7 @@
 #include "esp_log.h"
 
 // ---- API endpoint ----
-const char* SPOTHOLE_URL = "https://spothole.app/api/v1/spots?limit=20";
+const char* SPOTHOLE_URL = "https://spothole.app/api/v1/spots?limit=50";
 
 // ---- tuneable constants ----
 const unsigned long AUTO_REFRESH_MS = 5UL * 60UL * 1000UL;
