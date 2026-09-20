@@ -15,3 +15,7 @@ b = filter band
 
 w = wifi setup
 
+Up/Down arrows (; .)- scroll spots one at a time
+
+Left/Right arrows (, /) scroll spots page at a time
+
