@@ -4,6 +4,8 @@ A live outdoor-activation spot viewer for the **M5Stack Cardputer / Cardputer-Ad
 
 Built for portable operating: check what's on the air from your pocket, filter to VK/ZL, and jump straight to the frequency.
 
+![Spothole Cardputer running on a Cardputer-Adv](images/spothole-cardputer.jpg)
+
 ## Features
 
 - Live spots from Spothole, refreshed automatically every 5 minutes (or on demand)
