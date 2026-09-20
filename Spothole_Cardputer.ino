@@ -45,6 +45,8 @@
 #include <time.h>
 #include "esp_log.h"
 
+String truncStr(const String &s, int maxLen);   // forward declaration
+
 // ---- API endpoint ----
 const char* SPOTHOLE_URL = "https://spothole.app/api/v1/spots?limit=50";
 
@@ -52,7 +54,7 @@ const char* SPOTHOLE_URL = "https://spothole.app/api/v1/spots?limit=50";
 const unsigned long AUTO_REFRESH_MS = 5UL * 60UL * 1000UL;
 const int MAX_SPOTS     = 50;   // total spots stored
 const int MAX_INPUT_LEN = 63;
-const int ROW_H         = 20;   // px per spot (two 10-px text lines)
+const int ROW_H         = 30;   // px per spot (three 10-px text lines)
 const int LINE_CHARS    = 40;   // chars at textSize(1) on 240px
 
 // ---- WiFi credentials ----
@@ -72,6 +74,7 @@ struct Spot {
   String reference; // park ref or summit code
   String name;      // park name or summit details
   String region;    // locationDesc (POTA) or associationCode (SOTA)
+  String comments;
 };
 
 Spot spots[MAX_SPOTS];
@@ -205,11 +208,23 @@ void drawFooter() {
   int y = M5Cardputer.Display.height() - 10;
   M5Cardputer.Display.fillRect(0, y, M5Cardputer.Display.width(), 10, TFT_DARKGREY);
   M5Cardputer.Display.setTextColor(TFT_WHITE, TFT_DARKGREY);
+
+  // Position counter on the left: which spot is at the top, e.g. "3/34"
+  char posBuf[12];
+  if (visibleCount == 0) snprintf(posBuf, sizeof(posBuf), "0/0");
+  else snprintf(posBuf, sizeof(posBuf), "%d/%d", scrollOffset + 1, visibleCount);
+
   M5Cardputer.Display.setCursor(2, y + 1);
-  M5Cardputer.Display.print(statusLine);
+  M5Cardputer.Display.print(posBuf);
+
+  // Status text follows, shifted right by FOOTER_GAP characters
+  const int FOOTER_GAP = 6;   // 1 original space + 5 extra
+  int statusMax = LINE_CHARS - (int)strlen(posBuf) - FOOTER_GAP;
+  for (int i = 0; i < FOOTER_GAP; i++) M5Cardputer.Display.print(" ");
+  M5Cardputer.Display.print(truncStr(statusLine, statusMax));
 }
 
-String trunc(const String &s, int maxLen) {
+String truncStr(const String &s, int maxLen) {
   if ((int)s.length() <= maxLen) return s;
   return s.substring(0, maxLen - 1) + ">";
 }
@@ -238,9 +253,9 @@ uint16_t bandColour(const String &band) {
   if (band == "80m")  return TFT_ORANGE;
   if (band == "60m")  return TFT_YELLOW;
   if (band == "40m")  return TFT_GREEN;
-  if (band == "30m")  return TFT_DARKCYAN;
-  if (band == "20m")  return TFT_CYAN;
-  if (band == "17m")  return TFT_BLUE;
+  if (band == "30m")  return TFT_BLUE;
+  if (band == "20m")  return TFT_PINK;
+  if (band == "17m")  return TFT_CYAN;
   if (band == "15m")  return TFT_MAGENTA;
   if (band == "12m")  return TFT_LIGHTGREY;
   if (band == "10m")  return TFT_WHITE;
@@ -290,6 +305,7 @@ void drawList() {
 
     int y1 = top + i * ROW_H;
     int y2 = y1 + 10;
+    int y3 = y1 + 20;
 
     if (i > 0)
       M5Cardputer.Display.drawFastHLine(0, y1 - 1,
@@ -307,7 +323,7 @@ void drawList() {
     String band = freqToBand(s.freq.toFloat());
     snprintf(line1, sizeof(line1), "%s %-9s%-7s %-4s %-7s%4s", //-4s%4s
              s.time.c_str(),
-             trunc(s.callsign, 9).c_str(),
+             truncStr(s.callsign, 9).c_str(),
              s.freq.c_str(),
              band.c_str(),
              s.mode.c_str(),
@@ -353,7 +369,12 @@ void drawList() {
     String locLine = s.reference + "  " + s.name;
     M5Cardputer.Display.setTextColor(TFT_DARKCYAN, TFT_BLACK);
     M5Cardputer.Display.setCursor(2, y2);
-    M5Cardputer.Display.print(trunc(locLine, LINE_CHARS));
+    M5Cardputer.Display.print(truncStr(locLine, LINE_CHARS));
+
+    // --- Line 3: Comments ---
+    M5Cardputer.Display.setTextColor(TFT_DARKGREY, TFT_BLACK);
+    M5Cardputer.Display.setCursor(2, y3);
+    M5Cardputer.Display.print(truncStr(s.comments, LINE_CHARS));
   }
 }
 
@@ -506,8 +527,9 @@ int fetchSpothole() {
   filter[0]["sig_refs"] = true;
   filter[0]["time"]     = true;
   filter[0]["time_iso"] = true;
+  filter[0]["comment"]  = true;
 
-  DynamicJsonDocument doc(16384);
+  DynamicJsonDocument doc(32768);
   DeserializationError err = deserializeJson(doc, payload,
                                DeserializationOption::Filter(filter));
 
@@ -550,6 +572,8 @@ int fetchSpothole() {
     s.reference = refs[0]["id"].as<String>();
     s.name      = refs[0]["name"].as<String>();
     s.region    = sig;
+    s.comments  = obj["comment"].as<String>();
+    if (s.comments == "null") s.comments = "";
 
     if (s.source == 'S') sotaCount++; else otherCount++;
     added++;
@@ -568,7 +592,7 @@ bool fetchAll() {
   rebuildVisible();
   lastFetchMs = millis();
   if (statusLine.startsWith("Fetching") || statusLine.startsWith("HTTP") || statusLine.startsWith("JSON"))
-    statusLine = String(spotCount) + " spots   r=refresh f=VK m=mode b=band";
+    statusLine = "r=refresh f=VK m=mode b=band";
   return true;
 }
 
