@@ -117,4 +117,4 @@ The JSON buffer in `fetchSpothole()` is `DynamicJsonDocument doc(32768)`. If the
 
 ## Licence
 
-Add your preferred licence here (e.g. MIT) and include a `LICENSE` file in the repo.
+MIT
