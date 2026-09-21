@@ -6,7 +6,7 @@ Built for portable operating: check what's on the air from your pocket, filter t
 
 ![Spothole Cardputer running on a Cardputer-Adv](images/spothole-cardputer.jpg)
 
-![Uploading Closeup.jpg…]()
+
 
 ## Features
 
